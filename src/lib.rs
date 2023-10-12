@@ -66,7 +66,7 @@ impl Client {
         loop {
             let response = self
                 .http_client
-                .post(format!("{BASE_URL}/tts/job/{}", inference_job_token.into()))
+                .get(format!("{BASE_URL}/tts/job/{}", inference_job_token.into()))
                 .send()
                 .await?
                 .error_for_status()?
@@ -89,6 +89,18 @@ impl Client {
             // sleep before making next request to prevent 429 errors
             std::thread::sleep(Duration::from_secs(2))
         }
+    }
+
+    pub async fn voices(&self) -> Result<Vec<TtsVoices>, Error> {
+        let response = self
+            .http_client
+            .get("{BASE_URL}/tts/list")
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<Vec<TtsVoices>>()
+            .await?;
+        Ok(response)
     }
 }
 
@@ -123,17 +135,21 @@ pub struct TtsJobState {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all(deserialize = "snake_case"))]
 pub enum TtsJobStatus {
-    #[serde(rename(deserialize = "attempt_failed"))]
     AttemptFailed,
-    #[serde(rename(deserialize = "complete_failure"))]
     CompleteFailure,
-    #[serde(rename(deserialize = "complete_success"))]
     CompleteSuccess,
-    #[serde(rename(deserialize = "dead"))]
     Dead,
-    #[serde(rename(deserialize = "pending"))]
     Pending,
-    #[serde(rename(deserialize = "started"))]
     Started,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TtsVoices {
+    pub model_token: String,
+    pub tts_model_type: String,
+    pub title: String,
+    pub ietf_language_tag: String,
+    pub ietf_primary_language_subtag: String,
 }
