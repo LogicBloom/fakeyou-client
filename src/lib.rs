@@ -9,6 +9,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 const BASE_URL: &str = "https://api.fakeyou.com";
+const FILE_STORAGE_BASE_URL: &str = "https://storage.googleapis.com/vocodes-public";
 const CARGO_PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Debug, Clone)]
@@ -92,6 +93,10 @@ impl Client {
             // sleep before making next request to prevent 429 errors
             std::thread::sleep(Duration::from_secs(2))
         }
+    }
+
+    pub async fn request_audio_file(wav_audio_path: &str) -> String {
+        format!("{FILE_STORAGE_BASE_URL}/{wav_audio_path}")
     }
 
     pub async fn voices(&self) -> Result<Vec<TtsVoice>, Error> {
