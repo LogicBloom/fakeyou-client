@@ -17,7 +17,10 @@ pub struct Client {
 }
 
 impl Client {
-    pub async fn init<S: Into<String>>(username: S, password: S) -> Result<Self, Error> {
+    pub async fn from_login_credentials<S: Into<String>>(
+        username: S,
+        password: S,
+    ) -> Result<Self, Error> {
         let http_client = HttpClient::builder()
             .connect_timeout(std::time::Duration::from_secs(10))
             .user_agent(format!(
@@ -91,15 +94,20 @@ impl Client {
         }
     }
 
-    pub async fn voices(&self) -> Result<Vec<TtsVoices>, Error> {
+    pub async fn voices(&self) -> Result<Vec<TtsVoice>, Error> {
         let response = self
             .http_client
-            .get("{BASE_URL}/tts/list")
+            .get(format!("{BASE_URL}/tts/list"))
             .send()
             .await?
             .error_for_status()?
-            .json::<Vec<TtsVoices>>()
+            .json::<serde_json::Value>()
             .await?;
+        let response = response.get("models").ok_or(anyhow::anyhow!(
+            "Invalid response body: missing 'models' property"
+        ))?;
+        let response = serde_json::from_value(response.to_owned())
+            .map_err(|_| anyhow::anyhow!("Failed to deserialize models"))?;
         Ok(response)
     }
 }
@@ -146,7 +154,7 @@ pub enum TtsJobStatus {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct TtsVoices {
+pub struct TtsVoice {
     pub model_token: String,
     pub tts_model_type: String,
     pub title: String,

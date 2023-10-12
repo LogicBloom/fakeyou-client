@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Initialize the FakeYou client with your username and password
     let username = "your_username";
     let password = "your_password";
-    let fakeyou_client = Client::init(username, password).await?;
+    let fakeyou_client = Client::from_login_credentials(username, password).await?;
 
     // Perform TTS inference
     let tts_model_token = "your_model_token";
@@ -38,8 +38,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let tts_inference_response = fakeyou_client.tts_inference(tts_model_token, inference_text).await?;
 
     // Poll for TTS job status
-    let inference_job_token = tts_inference_response.inference_job_token.expect("No job token found");
-    let tts_job_response = fakeyou_client.poll_tts_job(inference_job_token).await?;
+    let tts_job_response = fakeyou_client.poll_tts_job(tts_inference_response.inference_job_token.unwrap()).await?;
 
     println!("{:#?}", tts_job_response);
     
