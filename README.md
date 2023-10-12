@@ -1,6 +1,11 @@
 # chatterverse_fakeyou 
 
-Chatterverse FakeYou is a Rust library that provides a client for interacting with the FakeYou API. This library allows you to perform text-to-speech (TTS) inference and monitor TTS job status.
+chatterverse_fakeyou is a Rust library that provides a client for interacting with the [FakeYou API](https://docs.fakeyou.com/#/?id=fakeyou-api).
+
+The following APIs are supported:
+- tts inference
+- tts polling
+- get list of voices
 
 ## Table of Contents
 
