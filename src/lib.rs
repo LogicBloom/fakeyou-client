@@ -95,8 +95,8 @@ impl Client {
         }
     }
 
-    pub async fn request_audio_file(wav_audio_path: &str) -> String {
-        format!("{FILE_STORAGE_BASE_URL}/{wav_audio_path}")
+    pub fn request_audio_file(&self, wav_audio_path: &str) -> String {
+        format!("{FILE_STORAGE_BASE_URL}{wav_audio_path}")
     }
 
     pub async fn voices(&self) -> Result<Vec<TtsVoice>, Error> {
@@ -144,7 +144,7 @@ pub struct TtsJobResponse {
 pub struct TtsJobState {
     pub status: TtsJobStatus,
     pub job_token: String,
-    pub maybe_public_bucket_wav_audio_path: String,
+    pub maybe_public_bucket_wav_audio_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
