@@ -47,7 +47,7 @@ impl Client {
         inference_text: S,
     ) -> Result<TtsInferenceResponse, Error> {
         let payload = TtsInferencePayload {
-            uuid_idempotency_token: Uuid::new_v4().to_string(),
+            uuid_idempotency_token: Uuid::new_v4(),
             tts_model_token: tts_model_token.into(),
             inference_text: inference_text.into(),
         };
@@ -119,7 +119,7 @@ impl Client {
 
 #[derive(Debug, Serialize)]
 pub struct TtsInferencePayload {
-    uuid_idempotency_token: String,
+    uuid_idempotency_token: Uuid,
     tts_model_token: String,
     inference_text: String,
 }
