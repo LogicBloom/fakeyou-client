@@ -2,6 +2,8 @@ pub mod error;
 
 use std::time::Duration;
 
+#[cfg(feature = "face_animator")]
+use derive_builder::Builder;
 pub use error::Error;
 use reqwest::Client as HttpClient;
 use serde::{Deserialize, Serialize};
@@ -41,6 +43,7 @@ impl Client {
         Ok(Client { http_client })
     }
 
+    #[cfg(feature = "tts")]
     pub async fn tts_inference<S: Into<String>>(
         &self,
         tts_model_token: S,
@@ -63,6 +66,7 @@ impl Client {
         Ok(response)
     }
 
+    #[cfg(feature = "tts")]
     pub async fn poll_tts_job<S: Into<String> + Copy>(
         &self,
         inference_job_token: S,
@@ -95,10 +99,12 @@ impl Client {
         }
     }
 
+    #[cfg(feature = "tts")]
     pub fn request_audio_file(&self, wav_audio_path: &str) -> String {
         format!("{FILE_STORAGE_BASE_URL}{wav_audio_path}")
     }
 
+    #[cfg(feature = "data")]
     pub async fn voices(&self) -> Result<Vec<TtsVoice>, Error> {
         let response = self
             .http_client
@@ -116,6 +122,7 @@ impl Client {
         Ok(response)
     }
 
+    #[cfg(feature = "media")]
     pub async fn upload_audio(&self, file: &[u8]) -> Result<UploadFileResponse, Error> {
         let payload = UploadFilePayload {
             uuid_idempotency_token: Uuid::new_v4(),
@@ -134,6 +141,7 @@ impl Client {
         Ok(response)
     }
 
+    #[cfg(feature = "media")]
     pub async fn upload_image(&self, file: &[u8]) -> Result<UploadFileResponse, Error> {
         let payload = UploadFilePayload {
             uuid_idempotency_token: Uuid::new_v4(),
@@ -152,19 +160,37 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn create_facial_animation(&self) -> Result<CreateFaceAnimationResponse, Error> {
-        unimplemented!()
+    #[cfg(feature = "face_animator")]
+    pub async fn create_facial_animation_builder(&self) -> CreateFaceAnimationPayloadBuilder {
+        CreateFaceAnimationPayloadBuilder::create_empty()
+    }
+
+    #[cfg(feature = "face_animator")]
+    pub async fn create_facial_animation(
+        &self,
+        payload: CreateFaceAnimationPayload,
+    ) -> Result<CreateFaceAnimationResponse, Error> {
+        let response = self
+            .http_client
+            .post(format!("{BASE_URL}/animation/face_animation/create"))
+            .json(&payload)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<CreateFaceAnimationResponse>()
+            .await?;
+        Ok(response)
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct TtsInferencePayload {
     uuid_idempotency_token: Uuid,
     tts_model_token: String,
     inference_text: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct TtsInferenceResponse {
     pub success: bool,
     pub error_type: Option<String>,
@@ -174,20 +200,20 @@ pub struct TtsInferenceResponse {
     pub inference_job_token_type: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct TtsJobResponse {
     pub success: bool,
     pub state: TtsJobState,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct TtsJobState {
     pub status: TtsJobStatus,
     pub job_token: String,
     pub maybe_public_bucket_wav_audio_path: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all(deserialize = "snake_case"))]
 pub enum TtsJobStatus {
     AttemptFailed,
@@ -198,7 +224,7 @@ pub enum TtsJobStatus {
     Started,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct TtsVoice {
     pub model_token: String,
     pub tts_model_type: String,
@@ -207,36 +233,58 @@ pub struct TtsVoice {
     pub ietf_primary_language_subtag: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct UploadFilePayload<'a> {
     uuid_idempotency_token: Uuid,
     file: &'a [u8],
     source: &'a str,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct UploadFileResponse {
     pub success: bool,
     pub upload_token: String,
 }
 
-#[derive(Debug, Serialize)]
+#[cfg(feature = "face_animator")]
+#[derive(Builder, Clone, Debug, Serialize)]
 pub struct CreateFaceAnimationPayload {
+    #[builder(setter(custom))]
     audio_sorce: FaceAnimationMediaSource,
+    #[builder(default = "\"twitter_square\".to_string()")]
     dimensions: String,
     disable_face_enhancement: bool,
+    #[builder(setter(custom))]
     image_source: FaceAnimationMediaSource,
     make_still: bool,
     remove_watermark: bool,
+    #[builder(default = "Uuid::new_v4()")]
     uuid_idempotency_token: Uuid,
 }
 
-#[derive(Debug, Serialize)]
+#[cfg(feature = "face_animator")]
+impl CreateFaceAnimationPayload {
+    pub fn audio_sorce(&mut self, maybe_media_upload_token: String) {
+        self.audio_sorce = FaceAnimationMediaSource {
+            maybe_media_upload_token,
+        };
+    }
+
+    pub fn image_source(&mut self, maybe_media_upload_token: String) {
+        self.image_source = FaceAnimationMediaSource {
+            maybe_media_upload_token,
+        };
+    }
+}
+
+#[cfg(feature = "face_animator")]
+#[derive(Clone, Debug, Serialize)]
 pub struct FaceAnimationMediaSource {
     maybe_media_upload_token: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[cfg(feature = "face_animator")]
+#[derive(Clone, Debug, Deserialize)]
 pub struct CreateFaceAnimationResponse {
     pub success: bool,
     pub inference_job_token: String,
