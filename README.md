@@ -6,6 +6,7 @@ The following APIs are supported:
 - tts inference
 - tts polling
 - get list of voices
+- face animator (including image and audio uploads)
 
 ## Table of Contents
 
