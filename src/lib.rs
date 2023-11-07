@@ -104,7 +104,7 @@ impl Client {
         format!("{FILE_STORAGE_BASE_URL}{wav_audio_path}")
     }
 
-    #[cfg(feature = "data")]
+    #[cfg(feature = "voices")]
     pub async fn voices(&self) -> Result<Vec<TtsVoice>, Error> {
         let response = self
             .http_client
@@ -122,7 +122,7 @@ impl Client {
         Ok(response)
     }
 
-    #[cfg(feature = "media")]
+    #[cfg(feature = "face_animator")]
     pub async fn upload_audio(&self, file: &[u8]) -> Result<UploadFileResponse, Error> {
         let payload = UploadFilePayload {
             uuid_idempotency_token: Uuid::new_v4(),
@@ -141,7 +141,7 @@ impl Client {
         Ok(response)
     }
 
-    #[cfg(feature = "media")]
+    #[cfg(feature = "face_animator")]
     pub async fn upload_image(&self, file: &[u8]) -> Result<UploadFileResponse, Error> {
         let payload = UploadFilePayload {
             uuid_idempotency_token: Uuid::new_v4(),
