@@ -133,6 +133,28 @@ impl Client {
             .await?;
         Ok(response)
     }
+
+    pub async fn upload_image(&self, file: &[u8]) -> Result<UploadFileResponse, Error> {
+        let payload = UploadFilePayload {
+            uuid_idempotency_token: Uuid::new_v4(),
+            file,
+            source: "file",
+        };
+        let response = self
+            .http_client
+            .post(format!("{BASE_URL}/media_uploads/upload_image"))
+            .form(&payload)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<UploadFileResponse>()
+            .await?;
+        Ok(response)
+    }
+
+    pub async fn create_facial_animation(&self) -> Result<CreateFaceAnimationResponse, Error> {
+        unimplemented!()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -194,6 +216,28 @@ pub struct UploadFilePayload<'a> {
 
 #[derive(Debug, Deserialize)]
 pub struct UploadFileResponse {
-    success: bool,
-    upload_token: String,
+    pub success: bool,
+    pub upload_token: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CreateFaceAnimationPayload {
+    audio_sorce: FaceAnimationMediaSource,
+    dimensions: String,
+    disable_face_enhancement: bool,
+    image_source: FaceAnimationMediaSource,
+    make_still: bool,
+    remove_watermark: bool,
+    uuid_idempotency_token: Uuid,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FaceAnimationMediaSource {
+    maybe_media_upload_token: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateFaceAnimationResponse {
+    pub success: bool,
+    pub inference_job_token: String,
 }
