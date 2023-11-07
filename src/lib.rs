@@ -115,6 +115,24 @@ impl Client {
             .map_err(|_| anyhow::anyhow!("Failed to deserialize models"))?;
         Ok(response)
     }
+
+    pub async fn upload_audio(&self, file: &[u8]) -> Result<UploadFileResponse, Error> {
+        let payload = UploadFilePayload {
+            uuid_idempotency_token: Uuid::new_v4(),
+            file,
+            source: "file",
+        };
+        let response = self
+            .http_client
+            .post(format!("{BASE_URL}/media_uploads/upload_audio"))
+            .form(&payload)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<UploadFileResponse>()
+            .await?;
+        Ok(response)
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -165,4 +183,17 @@ pub struct TtsVoice {
     pub title: String,
     pub ietf_language_tag: String,
     pub ietf_primary_language_subtag: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UploadFilePayload<'a> {
+    uuid_idempotency_token: Uuid,
+    file: &'a [u8],
+    source: &'a str,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UploadFileResponse {
+    success: bool,
+    upload_token: String,
 }
