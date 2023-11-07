@@ -24,6 +24,23 @@ To use the Chatterverse FakeYou Rust library in your project, add it as a depend
 chatterverse_fakeyou = {git = "https://github.com/chatterverse-ai/fakeyou-client.git"}
 ```
 
+### Features:
+
+`voices`: allows for fetching all voices from `fakeyou.com`
+
+```toml
+[dependencies]
+chatterverse_fakeyou = {git = "https://github.com/chatterverse-ai/fakeyou-client.git", features = ["voices"]}
+```
+
+`face_animator`: enables face animator and file upload apis
+
+```toml
+[dependencies]
+chatterverse_fakeyou = {git = "https://github.com/chatterverse-ai/fakeyou-client.git", features = ["face_animator"]}
+```
+
+
 ## Usage
 
 ```rust
