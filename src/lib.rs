@@ -180,7 +180,7 @@ impl Client {
     }
 
     #[cfg(feature = "face_animator")]
-    pub async fn poll_facial_animation_job<T: Into<String> + Copy>(
+    pub async fn poll_face_animation_job<T: Into<String> + Copy>(
         &self,
         inference_token: T,
     ) -> Result<FaceAnimationJobResponse, Error> {
