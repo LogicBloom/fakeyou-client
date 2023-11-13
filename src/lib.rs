@@ -97,7 +97,7 @@ impl Client {
         }
     }
 
-    pub fn request_file_path(&self, public_bucket_media_path: &str) -> String {
+    pub fn request_file_url(&self, public_bucket_media_path: &str) -> String {
         format!("{FILE_STORAGE_BASE_URL}{public_bucket_media_path}")
     }
 
