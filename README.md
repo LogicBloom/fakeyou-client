@@ -44,6 +44,8 @@ chatterverse_fakeyou = {git = "https://github.com/chatterverse-ai/fakeyou-client
 
 ## Usage
 
+- tts request
+
 ```rust
 use chatterverse_fakeyou::Client;
 use std::error::Error;

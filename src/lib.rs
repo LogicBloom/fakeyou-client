@@ -84,13 +84,11 @@ impl Client {
                 break Err(Error::TtsJobFailed(response.state.job_token));
             }
             match response.state.status {
-                TtsJobStatus::Started | TtsJobStatus::Pending => {}
-                TtsJobStatus::CompleteSuccess => {
+                JobStatus::AttemptFailed | JobStatus::Pending | JobStatus::Started => {}
+                JobStatus::CompleteSuccess => {
                     break Ok(response);
                 }
-                TtsJobStatus::AttemptFailed
-                | TtsJobStatus::CompleteFailure
-                | TtsJobStatus::Dead => {
+                JobStatus::CompleteFailure | JobStatus::Dead => {
                     break Err(Error::TtsJobFailed(response.state.job_token));
                 }
             }
@@ -99,9 +97,8 @@ impl Client {
         }
     }
 
-    #[cfg(feature = "tts")]
-    pub fn request_audio_file(&self, wav_audio_path: &str) -> String {
-        format!("{FILE_STORAGE_BASE_URL}{wav_audio_path}")
+    pub fn request_file_path(&self, public_bucket_media_path: &str) -> String {
+        format!("{FILE_STORAGE_BASE_URL}{public_bucket_media_path}")
     }
 
     #[cfg(feature = "voices")]
@@ -181,6 +178,40 @@ impl Client {
             .await?;
         Ok(response)
     }
+
+    #[cfg(feature = "face_animator")]
+    pub async fn poll_facial_animation_job<T: Into<String> + Copy>(
+        &self,
+        inference_token: T,
+    ) -> Result<FaceAnimationJobResponse, Error> {
+        loop {
+            let response = self
+                .http_client
+                .get(format!(
+                    "{BASE_URL}/model_inference/job_status/{}",
+                    inference_token.into()
+                ))
+                .send()
+                .await?
+                .error_for_status()?
+                .json::<FaceAnimationJobResponse>()
+                .await?;
+            if !response.success {
+                return Err(Error::FaceAnimationJobFailed(response));
+            }
+            match response.state.status.status {
+                JobStatus::AttemptFailed | JobStatus::Pending | JobStatus::Started => {}
+                JobStatus::CompleteSuccess => {
+                    return Ok(response);
+                }
+                JobStatus::CompleteFailure | JobStatus::Dead => {
+                    return Err(Error::FaceAnimationJobFailed(response));
+                }
+            }
+            // sleep before making next request to prevent 429 errors
+            std::thread::sleep(Duration::from_secs(10))
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -208,14 +239,14 @@ pub struct TtsJobResponse {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct TtsJobState {
-    pub status: TtsJobStatus,
+    pub status: JobStatus,
     pub job_token: String,
     pub maybe_public_bucket_wav_audio_path: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all(deserialize = "snake_case"))]
-pub enum TtsJobStatus {
+pub enum JobStatus {
     AttemptFailed,
     CompleteFailure,
     CompleteSuccess,
@@ -288,4 +319,54 @@ pub struct FaceAnimationMediaSource {
 pub struct CreateFaceAnimationResponse {
     pub success: bool,
     pub inference_job_token: String,
+}
+
+#[cfg(feature = "face_animator")]
+#[derive(Clone, Debug, Deserialize)]
+pub struct FaceAnimationJobResponse {
+    pub success: bool,
+    pub state: FaceAnimationJobState,
+}
+
+#[cfg(feature = "face_animator")]
+#[derive(Clone, Debug, Deserialize)]
+pub struct FaceAnimationJobState {
+    pub job_token: String,
+    pub request: FaceAnimationRequest,
+    pub status: FaceAnimationStatus,
+    pub maybe_result: Option<FaceAnimationRequest>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[cfg(feature = "face_animator")]
+#[derive(Clone, Debug, Deserialize)]
+pub struct FaceAnimationRequest {
+    pub inference_category: String,
+    pub maybe_model_type: String,
+    pub maybe_model_token: Option<String>,
+    pub maybe_model_title: String,
+    pub maybe_raw_inference_text: Option<String>,
+}
+
+#[cfg(feature = "face_animator")]
+#[derive(Clone, Debug, Deserialize)]
+pub struct FaceAnimationStatus {
+    pub status: JobStatus,
+    pub maybe_extra_status_description: Option<String>,
+    pub maybe_assigned_worker: String,
+    pub maybe_assigned_cluster: String,
+    pub maybe_first_started_at: String,
+    pub attempt_count: u32,
+    pub require_keepalive: bool,
+    pub maybe_failure_category: Option<String>,
+}
+
+#[cfg(feature = "face_animator")]
+#[derive(Clone, Debug, Deserialize)]
+pub struct FaceAnimationResult {
+    pub entity_type: String,
+    pub entity_token: String,
+    pub maybe_public_bucket_media_path: String,
+    pub maybe_successfully_completed_at: String,
 }

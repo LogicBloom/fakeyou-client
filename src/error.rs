@@ -1,5 +1,8 @@
 use reqwest::StatusCode;
 
+#[cfg(feature = "face_animator")]
+use crate::FaceAnimationJobResponse;
+
 #[derive(thiserror::Error)]
 pub enum Error {
     #[error("Failed to authenticate user, check your credentials")]
@@ -8,6 +11,9 @@ pub enum Error {
     TooManyRequestsError,
     #[error("Tts job '{0}' was unsuccessful")]
     TtsJobFailed(String),
+    #[cfg(feature = "face_animator")]
+    #[error("Face animation job was unsuccessful: {0:?}")]
+    FaceAnimationJobFailed(FaceAnimationJobResponse),
     #[error(transparent)]
     InternalError(#[from] anyhow::Error),
 }
