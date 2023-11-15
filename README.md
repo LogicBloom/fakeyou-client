@@ -7,6 +7,7 @@ The following APIs are supported:
 - tts polling
 - get list of voices
 - face animator (including image and audio uploads)
+- face animator polling
 
 ## Table of Contents
 
