@@ -76,6 +76,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 Contributions are welcome! If you find a bug or have an enhancement in mind, please open an issue or submit a pull request on the [GitHub repository](https://github.com/chatterverse-ai/fakeyou-client).
 
+For API support, feel free to join the official [Fakeyou discord server](https://discord.com/invite/fakeyou)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.

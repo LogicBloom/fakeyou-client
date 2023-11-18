@@ -43,6 +43,10 @@ impl Client {
         Ok(Client { http_client })
     }
 
+    pub async fn from_api_key<S: Into<String>>(_api_key: S) -> Result<Self, Error> {
+        unimplemented!("Try get an api key from echelon")
+    }
+
     #[cfg(feature = "tts")]
     pub async fn tts_inference<S: Into<String>>(
         &self,
