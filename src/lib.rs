@@ -93,7 +93,7 @@ impl Client {
                 }
             }
             // sleep before making next request to prevent 429 errors
-            std::thread::sleep(Duration::from_secs(10))
+            std::thread::sleep(Duration::from_secs(8))
         }
     }
 
